@@ -30,56 +30,41 @@ public class ValidityService {
     public List<String> validate(List<String> numbers) {
         return numbers.stream()
                 .filter(this::validateCorrectCharacters)
+                .map(Number::new)
                 .filter(this::validate)
+                .map(Number::getOriginalNumber)
                 .collect(Collectors.toList());
     }
 
-    private boolean validate(String number){
+    private boolean validate(Number number){
         try {
-            if (!isOrganizationalNumber(number)) {
+            if (!number.isOrganizationalNumber()) {
                 validateDate(number);
             }
-            String formattedNumber = formatNumber(number);
-            validateCorrectLength(formattedNumber);
-            validateChecksum(formattedNumber);
+
+            validateChecksum(number);
         } catch (IllegalArgumentException e) {
-            LOGGER.log(Level.INFO, String.format("%s invalid, cause: %s", number, e.getMessage()));
+            LOGGER.log(Level.INFO, String.format("%s invalid, cause: %s", number.getOriginalNumber(), e.getMessage()));
             return false;
         }
         return true;
     }
 
-    private boolean isOrganizationalNumber(String number) {
-        number = number.length() > 11 ? number.substring(2) : number;
-        // By definition, the middle pair of digits in an organizational number must be at least 20
-        return Integer.parseInt(number.substring(2, 4)) >= 20;
-    }
-
-    private void validateDate(String number) {
-        number = formatCoordinationNumber(number);
+    private void validateDate(Number number) {
+        String dateString = number.getDateString();
+        if (number.isCoordinationNumber()) {
+            dateString = number.getYear() + number.getMonth() + String.format("%02d", Integer.parseInt(number.getDay()) - 60);
+        }
 
         try {
-            if (number.length() >= 12) {
-                LocalDate.parse(number.substring(0, 8), STANDARD_FORMATTER);
-            } else if (number.contains("+")) {
-                LocalDate.parse(number.substring(0, 6), MORE_THAN_HUNDRED_YEARS);
+            if (number.containsPlus()) {
+                LocalDate.parse(dateString, MORE_THAN_HUNDRED_YEARS);
             } else {
-                LocalDate.parse(number.substring(0, 6), STANDARD_FORMATTER);
+                LocalDate.parse(dateString, STANDARD_FORMATTER);
             }
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Number does not begin with a valid date");
         }
-    }
-
-    private String formatCoordinationNumber(String number) {
-        // The number representing the day in a co-ordination number has been incremented by 60 from the actual day it represents
-        int day = number.length() >= 12 ? Integer.parseInt(number.substring(6, 8)) : Integer.parseInt(number.substring(4, 6));
-        if (day > 60 && day < 92) {
-            // This is a co-ordination number, replace the incremented day with the actual day
-            int yearDigits = number.length() >= 12 ? 4 : 2;
-            return number.substring(0, yearDigits) + String.format("%02d", day - 60) + number.substring(yearDigits + 3);
-        }
-        return number;
     }
 
     private boolean validateCorrectCharacters(String number) throws IllegalArgumentException {
@@ -90,25 +75,9 @@ public class ValidityService {
         return false;
     }
 
-    private void validateCorrectLength(String number) throws IllegalArgumentException {
-        if (number.length() != 10) {
-            throw new IllegalArgumentException("Number has incorrect length");
-        }
-    }
-
-    private String formatNumber(String number) {
-        if (number.contains("-")) {
-            number = number.replace("-", "");
-        } else if (number.contains("+")) {
-            number = number.replace("+", "");
-        }
-
-        return number.length() == 12 ? number.substring(2) : number;
-    }
-
-    private void validateChecksum(String number) {
-        int checkSum = Integer.parseInt(number.substring(9));
-        String numberWithoutChecksum = number.substring(0, 9);
+    private void validateChecksum(Number number) {
+        int lengthOfNumber = number.getFormattedNumber().length();
+        String numberWithoutChecksum = lengthOfNumber == 12 ? number.getFormattedNumber().substring(2, lengthOfNumber - 1): number.getFormattedNumber().substring(0, lengthOfNumber - 1);
         int sum = 0;
 
         for (int i = 0; i < numberWithoutChecksum.length(); i++) {
@@ -119,7 +88,7 @@ public class ValidityService {
             sum += addition;
         }
 
-        if ((sum + checkSum) % 10 != 0) {
+        if ((sum + number.getCheckSum()) % 10 != 0) {
            throw new IllegalArgumentException("Number has incorrect check sum, does not pass Luhn validation");
         }
     }
