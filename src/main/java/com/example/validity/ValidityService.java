@@ -1,3 +1,4 @@
+package com.example.validity;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -14,8 +15,8 @@ import java.util.stream.Collectors;
 public class ValidityService {
 
     private static final Logger LOGGER = Logger.getLogger(ValidityService.class.getName());
-    private static final Pattern CORRECT_CHARACTERS = Pattern.compile("^\\d{6,8}\\-?\\d{4}");//todo: bit ugly
-    private static final Pattern CORRECT_CHARACTERS_WITH_PLUS = Pattern.compile("^\\d{6,8}\\+?\\d{4}");//todo: bit ugly
+    private static final Pattern CORRECT_CHARACTERS = Pattern.compile("^\\d{6,8}\\-?\\d{4}");
+    private static final Pattern CORRECT_CHARACTERS_WITH_PLUS = Pattern.compile("^\\d{6,8}\\+?\\d{4}");
 
     private static final DateTimeFormatter STANDARD_FORMATTER = new DateTimeFormatterBuilder()
             .appendValueReduced(ChronoField.YEAR, 2, 4, LocalDate.now().minusYears(99))
