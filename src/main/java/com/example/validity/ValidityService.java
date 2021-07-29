@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class ValidityService {
 
     private static final Logger LOGGER = Logger.getLogger(ValidityService.class.getName());
-    private static final Pattern CORRECT_CHARACTERS = Pattern.compile("^\\d{6,8}\\-?\\d{4}|^\\d{6,8}\\+?\\d{4}");
+    private static final Pattern VALID_CHARACTERS = Pattern.compile("^\\d{6,8}\\-?\\d{4}|^\\d{6,8}\\+?\\d{4}");
 
     private static final DateTimeFormatter STANDARD_FORMATTER = new DateTimeFormatterBuilder()
             .appendValueReduced(ChronoField.YEAR, 2, 4, LocalDate.now().minusYears(99))
@@ -29,14 +29,14 @@ public class ValidityService {
 
     public List<String> validate(List<String> numbers) {
         return numbers.stream()
-                .filter(this::validateCorrectCharacters)
+                .filter(this::validateCharacters)
                 .map(Number::new)
                 .filter(this::validate)
                 .map(Number::getOriginalNumber)
                 .collect(Collectors.toList());
     }
 
-    private boolean validate(Number number){
+    private boolean validate(Number number) {
         try {
             if (!number.isOrganizationalNumber()) {
                 validateDate(number);
@@ -53,6 +53,8 @@ public class ValidityService {
     private void validateDate(Number number) {
         String dateString = number.getDateString();
         if (number.isCoordinationNumber()) {
+            // In a coordination number the digits representing 'Day' have been incremented by 60.
+            // To allow date validation, create a string representing the original date
             dateString = number.getYear() + number.getMonth() + String.format("%02d", Integer.parseInt(number.getDay()) - 60);
         }
 
@@ -67,17 +69,16 @@ public class ValidityService {
         }
     }
 
-    private boolean validateCorrectCharacters(String number) throws IllegalArgumentException {
-        if (CORRECT_CHARACTERS.matcher(number).matches()) {
+    private boolean validateCharacters(String number) throws IllegalArgumentException {
+        if (VALID_CHARACTERS.matcher(number).matches()) {
             return true;
         }
-        LOGGER.log(Level.INFO, String.format("Number: %s contains incorrect characters. Number may only contain digits, one dash, or one plus sign", number));
+        LOGGER.log(Level.INFO, String.format("Number: %s contains invalid characters. Number may only contain digits, one dash, or one plus sign", number));
         return false;
     }
 
     private void validateChecksum(Number number) {
-        int lengthOfNumber = number.getFormattedNumber().length();
-        String numberWithoutChecksum = lengthOfNumber == 12 ? number.getFormattedNumber().substring(2, lengthOfNumber - 1): number.getFormattedNumber().substring(0, lengthOfNumber - 1);
+        String numberWithoutChecksum = number.getNumberWithoutChecksum();
         int sum = 0;
 
         for (int i = 0; i < numberWithoutChecksum.length(); i++) {
@@ -89,7 +90,7 @@ public class ValidityService {
         }
 
         if ((sum + number.getCheckSum()) % 10 != 0) {
-           throw new IllegalArgumentException("Number has incorrect check sum, does not pass Luhn validation");
+            throw new IllegalArgumentException("Number has incorrect check sum, does not pass Luhn validation");
         }
     }
 

@@ -3,25 +3,11 @@ package com.example.validity;
 public class Number {
 
     private final String originalNumber;
-    private final String year;
-    private final String month;
-    private final String day;
     private final String formattedNumber;
-    private final boolean containsPlus;
-    private final boolean isOrganizationalNumber;
-    private final boolean isCoordinationNumber;
-    private final Integer checkSum;
 
     public Number(String originalNumber) {
         this.originalNumber = originalNumber;
         this.formattedNumber = originalNumber.replaceAll("[-+]", "");
-        this.year = formattedNumber.length() > 10 ? originalNumber.substring(0, 4) : originalNumber.substring(0, 2);
-        this.month = formattedNumber.length() > 10 ? originalNumber.substring(4, 6) : originalNumber.substring(2, 4);
-        this.day = formattedNumber.length() > 10 ? originalNumber.substring(6, 8) : originalNumber.substring(4, 6);
-        this.containsPlus = originalNumber.contains("+");
-        this.isOrganizationalNumber = Integer.parseInt(month) >= 20;
-        this.isCoordinationNumber = Integer.parseInt(day) > 60;
-        this.checkSum = Integer.valueOf(originalNumber.substring(originalNumber.length() - 1));
     }
 
     public String getOriginalNumber() {
@@ -29,38 +15,50 @@ public class Number {
     }
 
     public String getYear() {
-        return year;
+        return formattedNumber.length() > 10 ? originalNumber.substring(0, 4) : originalNumber.substring(0, 2);
     }
 
     public String getMonth() {
-        return month;
+        return formattedNumber.length() > 10 ? originalNumber.substring(4, 6) : originalNumber.substring(2, 4);
     }
 
     public String getDay() {
-        return day;
+        return formattedNumber.length() > 10 ? originalNumber.substring(6, 8) : originalNumber.substring(4, 6);
     }
 
     public String getDateString() {
-        return year + month + day;
+        return getYear() + getMonth() + getDay();
     }
 
+    /**
+     *
+     * @return Original number with any dash or plus sign removed
+     */
     public String getFormattedNumber() {
         return formattedNumber;
     }
 
     public boolean containsPlus() {
-        return containsPlus;
+        return originalNumber.contains("+");
     }
 
     public boolean isOrganizationalNumber() {
-        return isOrganizationalNumber;
+        return Integer.parseInt(getMonth()) >= 20;
     }
 
     public boolean isCoordinationNumber() {
-        return isCoordinationNumber;
+        return Integer.parseInt(getDay()) > 60;
+    }
+
+    /**
+     *
+     * @return Original number, with dash or plus sign removed, with year formatted as YY, and without the last digit
+     */
+    public String getNumberWithoutChecksum() {
+        return formattedNumber.length() == 12 ? formattedNumber.substring(2, formattedNumber.length() - 1) : formattedNumber.substring(0, formattedNumber.length() - 1);
     }
 
     public Integer getCheckSum() {
-        return checkSum;
+        return Integer.valueOf(originalNumber.substring(originalNumber.length() - 1));
     }
 }

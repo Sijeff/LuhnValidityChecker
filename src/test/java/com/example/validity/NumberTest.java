@@ -17,6 +17,7 @@ class NumberTest {
         assertThat(coordinationNumber.isOrganizationalNumber()).isFalse();
         assertThat(coordinationNumber.containsPlus()).isFalse();
         assertThat(coordinationNumber.getCheckSum()).isEqualTo(4);
+        assertThat(coordinationNumber.getNumberWithoutChecksum()).isEqualTo("091079982");
 
         Number organizationNumber = new Number("16556601-6399");
         assertThat(organizationNumber.getYear()).isEqualTo("1655");
@@ -28,6 +29,7 @@ class NumberTest {
         assertThat(organizationNumber.isOrganizationalNumber()).isTrue();
         assertThat(organizationNumber.containsPlus()).isFalse();
         assertThat(organizationNumber.getCheckSum()).isEqualTo(9);
+        assertThat(organizationNumber.getNumberWithoutChecksum()).isEqualTo("556601639");
     }
 
     @Test
@@ -42,6 +44,7 @@ class NumberTest {
         assertThat(first.isOrganizationalNumber()).isFalse();
         assertThat(first.containsPlus()).isTrue();
         assertThat(first.getCheckSum()).isEqualTo(1);
+        assertThat(first.getNumberWithoutChecksum()).isEqualTo("900118981");
 
         Number second = new Number("4607137454");
         assertThat(second.getYear()).isEqualTo("46");
@@ -53,5 +56,6 @@ class NumberTest {
         assertThat(second.isOrganizationalNumber()).isFalse();
         assertThat(second.containsPlus()).isFalse();
         assertThat(second.getCheckSum()).isEqualTo(4);
+        assertThat(second.getNumberWithoutChecksum()).isEqualTo("460713745");
     }
 }
